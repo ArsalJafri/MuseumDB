@@ -5,17 +5,25 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/tabs";
 
 const exhibits = {
   Paintings: [
-    { title: "Starry Night", artist: "Vincent van Gogh" },
-    { title: "Mona Lisa", artist: "Leonardo da Vinci" },
+    { title: "Butterfly Collection" , artist: "Janet Fish" , image:  "/Butterfly_Collection.jpeg"},
+    { title: "Autumn Equinox Moon", artist: "Hayley Barker", image:  "/Autumn_Equinox_Moon.jpeg"},
   ],
   Sculptures: [
-    { title: "David", artist: "Michelangelo" },
-    { title: "The Thinker", artist: "Auguste Rodin" },
+    { title: "Pourquoi Naître Esclave?", artist: "Jean-Baptiste Carpeaux" , image: "/Pourquoi_Naître_Esclave.jpeg"},
+    { title: "La Sordidez", artist: "Antonio Berni", image: "/La_sordidez.jpeg"},
   ],
-  Photography: [
-    { title: "Migrant Mother", artist: "Dorothea Lange" },
-    { title: "Moonrise, Hernandez, New Mexico", artist: "Ansel Adams" },
+  Photographs: [
+    { title: "Mother", artist: "Kathryn Cook", image: "/Mother.jpeg"},
+    { title: "Back in Business", artist: "Sarah Terry", image: "/Back_in_Business.jpeg"},
   ],
+  Prints: [
+    {title: "The Psyche", artist: "Bernard Boutet de Monvel", image: "/The_Psyche.jpeg"},
+    {title: "Tokugawa Shogun Viewing Watermelon Fight at Hama Palace", artist: "Tsukioka Yoshitoshi", image: "/Tokugawa_Shogun_Viewing_Watermelon_Fight_at_Hama_Palace.jpeg"}
+  ],
+  Ceramics: [
+    {title: "Sainami Koki (Wave Incense Holder)", artist: "Miyashita Zenji", image: "/Sainami_Koki.jpeg"},
+    {title: "Blue Vessel", artist: "Hiruma Kazuyo", image: "/Blue_Vessel.jpeg"}
+  ]
 };
 
 const events = [
@@ -28,10 +36,9 @@ export default function ArtExhibits() {
   const [selectedCategory, setSelectedCategory] = useState("Paintings");
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-4">Art Exhibits</h1>
+    <div className="pt-24 p-6">
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-        <TabsList className="mb-4">
+        <TabsList className="flex gap-4 border-b pb-2 justify-center">
           {Object.keys(exhibits).map((category) => (
             <TabsTrigger key={category} value={category}>
               {category}
@@ -42,8 +49,9 @@ export default function ArtExhibits() {
           <TabsContent key={category} value={category}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {artworks.map((art, index) => (
-                <Card key={index}>
+                <Card key={index} className="mb-6">
                   <CardContent className="p-4">
+                    <img src={art.image} alt={art.title} className="w-full h-48 object-cover rounded-lg mt-6"/>
                     <h2 className="text-xl font-semibold">{art.title}</h2>
                     <p className="text-gray-600">by {art.artist}</p>
                   </CardContent>

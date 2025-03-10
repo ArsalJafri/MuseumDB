@@ -17,7 +17,7 @@ export function TabsList({ children }) {
 export function TabsTrigger({ value, onValueChange, children }) {
   return (
     <button
-      className="px-4 py-2 rounded-md text-lg font-medium transition-colors hover:bg-gray-200"
+      className="px-4 pt-24 rounded-md text-lg font-medium transition-colors hover:bg-gray-200"
       onClick={() => onValueChange(value)}
     >
       {children}
