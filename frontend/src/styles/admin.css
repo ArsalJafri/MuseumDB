@@ -58,7 +58,7 @@
     width: 100%;
     min-height: 100vh;
 
-    background-image: url('/adminhomepic.jpg');
+    background-image: url('/manageemployees.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -68,9 +68,12 @@
 
 /* Title */
 .page-title {
-    font-size: 2rem;
+    font-size: 3rem;
+    position: relative;
+    top: -350px;
+    left: -250px;
     font-weight: bold;
-    color: #313639;
+    color: #0b0c0d;
     margin-bottom: 20px;
 }
 
@@ -88,6 +91,8 @@
     overflow: hidden;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     background-color: rgba(255, 255, 255, 0.5);
+    position: relative;
+    top: -300px;
 }
 
 .employee-table th, .employee-table td {
@@ -125,32 +130,73 @@
 }
 
 /* Add Employee Form */
-.add-employee-container {
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
     background: white;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    width: 400px;
     text-align: center;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.input-field {
-    margin: 10px;
-    padding: 10px;
-    border: 1px solid #ccc;
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.open-modal-button {
+    background-color: #007bff;
+    position: relative;
+    left: -360px;
+    top: -300px;
+
+    color: white;
+    border: none;
+    padding: 10px 15px;
     border-radius: 5px;
-    width: 80%;
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 10px;
 }
 
 .add-employee-button {
-    display: block;
-    padding: 10px 15px;
-    background-color: #313639;
+    background-color: #28a745;
     color: white;
     border: none;
+    padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 16px;
 }
 
-.add-employee-button:hover {
-    background-color: #5a5a5a;
+.close-modal-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }

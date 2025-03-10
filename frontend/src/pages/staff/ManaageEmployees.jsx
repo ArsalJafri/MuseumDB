@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import "../../styles/admin.css";
+import "../../styles/admin.css"; // Make sure your CSS handles modal styles
 
+// this is just a tatic table for now
 const ManageEmployees = () => {
-    // Sample employees list (static for now)
     const [employees, setEmployees] = useState([
         { id: 1, name: "John Doe", position: "Manager", hireDate: "2023-01-10", salary: 50000, status: "Active" },
         { id: 2, name: "Jane Smith", position: "Giftshop", hireDate: "2022-06-15", salary: 40000, status: "Active" },
@@ -13,7 +13,9 @@ const ManageEmployees = () => {
         name: "", position: "", hireDate: "", salary: ""
     });
 
-    // Handle input changes for new employee form
+    const [isModalOpen, setIsModalOpen] = useState(false); // State to handle modal visibility
+
+    // Handle input changes
     const handleInputChange = (e) => {
         setNewEmployee({ ...newEmployee, [e.target.name]: e.target.value });
     };
@@ -28,15 +30,16 @@ const ManageEmployees = () => {
                     name: newEmployee.name,
                     position: newEmployee.position,
                     hireDate: newEmployee.hireDate,
-                    salary: parseFloat(newEmployee.salary), // Convert salary to a number
+                    salary: parseFloat(newEmployee.salary),
                     status: "Active"
                 }
             ]);
             setNewEmployee({ name: "", position: "", hireDate: "", salary: "" }); // Reset form
+            setIsModalOpen(false); // Close the modal after adding an employee
         }
     };
 
-    // Toggle employee status (Active/Inactive)
+    // Toggle employee status
     const toggleStatus = (id) => {
         setEmployees(
             employees.map(emp =>
@@ -48,6 +51,9 @@ const ManageEmployees = () => {
     return (
         <main className="manage-employees-container">
             <h1 className="page-title">Manage Employees</h1>
+
+            {/* "Add Employee" Button - Opens the modal */}
+            <button className="open-modal-button" onClick={() => setIsModalOpen(true)}>Add Employee</button>
 
             {/* Employee Table */}
             <div className="employee-table-container">
@@ -84,42 +90,49 @@ const ManageEmployees = () => {
                 </table>
             </div>
 
-            {/* Add Employee Form */}
-            <div className="add-employee-container">
-                <h2>Add New Employee</h2>
-                <input
-                    type="text"
-                    name="name"
-                    placeholder="Employee Name"
-                    value={newEmployee.name}
-                    onChange={handleInputChange}
-                    className="input-field"
-                />
-                <input
-                    type="text"
-                    name="position"
-                    placeholder="Position"
-                    value={newEmployee.position}
-                    onChange={handleInputChange}
-                    className="input-field"
-                />
-                <input
-                    type="date"
-                    name="hireDate"
-                    value={newEmployee.hireDate}
-                    onChange={handleInputChange}
-                    className="input-field"
-                />
-                <input
-                    type="number"
-                    name="salary"
-                    placeholder="Salary"
-                    value={newEmployee.salary}
-                    onChange={handleInputChange}
-                    className="input-field"
-                />
-                <button className="add-employee-button" onClick={addEmployee}>Add Employee</button>
-            </div>
+            {/* Modal for Adding Employees */}
+            {isModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h2>Add New Employee</h2>
+                        <input
+                            type="text"
+                            name="name"
+                            placeholder="Employee Name"
+                            value={newEmployee.name}
+                            onChange={handleInputChange}
+                            className="input-field"
+                        />
+                        <input
+                            type="text"
+                            name="position"
+                            placeholder="Position"
+                            value={newEmployee.position}
+                            onChange={handleInputChange}
+                            className="input-field"
+                        />
+                        <input
+                            type="date"
+                            name="hireDate"
+                            value={newEmployee.hireDate}
+                            onChange={handleInputChange}
+                            className="input-field"
+                        />
+                        <input
+                            type="number"
+                            name="salary"
+                            placeholder="Salary"
+                            value={newEmployee.salary}
+                            onChange={handleInputChange}
+                            className="input-field"
+                        />
+                        <div className="modal-buttons">
+                            <button className="add-employee-button" onClick={addEmployee}>Add Employee</button>
+                            <button className="close-modal-button" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 };
