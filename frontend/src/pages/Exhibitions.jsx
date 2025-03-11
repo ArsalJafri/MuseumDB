@@ -1,30 +1,13 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent } from "../components/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/tabs";
-
-const exhibits = {
-  Paintings: [
-    { title: "Butterfly Collection" , artist: "Janet Fish" , image:  "/Butterfly_Collection.jpeg"},
-    { title: "Autumn Equinox Moon", artist: "Hayley Barker", image:  "/Autumn_Equinox_Moon.jpeg"},
-  ],
-  Sculptures: [
-    { title: "Pourquoi Naître Esclave?", artist: "Jean-Baptiste Carpeaux" , image: "/Pourquoi_Naître_Esclave.jpeg"},
-    { title: "La Sordidez", artist: "Antonio Berni", image: "/La_sordidez.jpeg"},
-  ],
-  Photographs: [
-    { title: "Mother", artist: "Kathryn Cook", image: "/Mother.jpeg"},
-    { title: "Back in Business", artist: "Sarah Terry", image: "/Back_in_Business.jpeg"},
-  ],
-  Prints: [
-    {title: "The Psyche", artist: "Bernard Boutet de Monvel", image: "/The_Psyche.jpeg"},
-    {title: "Tokugawa Shogun Viewing Watermelon Fight at Hama Palace", artist: "Tsukioka Yoshitoshi", image: "/Tokugawa_Shogun_Viewing_Watermelon_Fight_at_Hama_Palace.jpeg"}
-  ],
-  Ceramics: [
-    {title: "Sainami Koki (Wave Incense Holder)", artist: "Miyashita Zenji", image: "/Sainami_Koki.jpeg"},
-    {title: "Blue Vessel", artist: "Hiruma Kazuyo", image: "/Blue_Vessel.jpeg"}
-  ]
-};
+import NavigationTabs from "../components/NavigationTabs";
+import { useNavigate, useLocation } from "react-router-dom";
+import Paintings from "./Paintings";
+import Sculptures from "./Sculptures";
+import Photographs from "./Photographs";
+import Prints from "./Prints";
+import Ceramics from "./Ceramics";
 
 const events = [
   { name: "Art & Wine Night", date: "March 10, 2025" },
@@ -33,45 +16,53 @@ const events = [
 ];
 
 export default function ArtExhibits() {
-  const [selectedCategory, setSelectedCategory] = useState("Paintings");
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get current category from URL path (default to "paintings")
+  const currentCategory = location.pathname.split("/").pop() || "paintings";
+
+  // Function to switch category
+  const handleCategoryChange = (category) => {
+    navigate(`/exhibitions/${category.toLowerCase()}`);
+  };
+
+  // Mapping categories to components
+  const categoryComponents = {
+    paintings: <Paintings />,
+    sculptures: <Sculptures />,
+    photographs: <Photographs />,
+    prints: <Prints />,
+    ceramics: <Ceramics />,
+  };
 
   return (
     <div className="pt-24 p-6">
-      <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-        <TabsList className="flex gap-4 border-b pb-2 justify-center">
-          {Object.keys(exhibits).map((category) => (
-            <TabsTrigger key={category} value={category}>
-              {category}
-            </TabsTrigger>
+      {/* Page Title */}
+      <h1 className="text-3xl font-bold my-4 text-center">Current Art Exhibitions</h1>
+      <p className="text-lg text-gray-600 text-center max-w-2xl mx-auto">
+        Explore our curated selection of paintings, sculptures, photographs, prints, and ceramics.
+        Click on a category below to discover beautiful artworks.
+      </p> 
+
+      {/* Navigation Tabs */}
+      <NavigationTabs onCategoryChange={handleCategoryChange} />
+
+      {/* Upcoming Events Section */}
+      <div>
+        <h2 className="text-2xl font-bold mt-6">Upcoming Events</h2>
+        <div className="mt-4">
+          {events.map((event, index) => (
+            <Card key={index} className="mb-2">
+              <CardContent className="p-4">
+                <h3 className="text-lg font-semibold">{event.name}</h3>
+                <p className="text-gray-500">{event.date}</p>
+              </CardContent>
+            </Card>
           ))}
-        </TabsList>
-        {Object.entries(exhibits).map(([category, artworks]) => (
-          <TabsContent key={category} value={category}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {artworks.map((art, index) => (
-                <Card key={index} className="mb-6">
-                  <CardContent className="p-4">
-                    <img src={art.image} alt={art.title} className="w-full h-48 object-cover rounded-lg mt-6"/>
-                    <h2 className="text-xl font-semibold">{art.title}</h2>
-                    <p className="text-gray-600">by {art.artist}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
-      <h2 className="text-2xl font-bold mt-6">Upcoming Events</h2>
-      <div className="mt-4">
-        {events.map((event, index) => (
-          <Card key={index} className="mb-2">
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold">{event.name}</h3>
-              <p className="text-gray-500">{event.date}</p>
-            </CardContent>
-          </Card>
-        ))}
+        </div>
       </div>
     </div>
   );
 }
+
