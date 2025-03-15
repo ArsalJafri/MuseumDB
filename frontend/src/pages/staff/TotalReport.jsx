@@ -3,14 +3,21 @@ import { useState, useEffect } from "react";
 
 const TotalReport = () => {
     // Dummy Sales Data 
-    const [salesData, setSalesData] = useState({
-        customer: "N/A",
-        purchasedItem: "N/A",
-        totalEarned: 0,
-        totalQuantity: 0,
-        totalTransactions: 0,
-        date: "mmmm-dd-yyyy",
-    });
+    const [reportType, setReportType] = useState("total-tickets-sales");
+    const [ticketSales, setTicketSales] = useState([]);
+
+     useEffect(() => {
+            fetchReportData();
+        }, []);
+    const fetchReportData = async () => {
+        try {
+            const response = await fetch("http://localhost:3000/total-report");
+            const data = await response.json();
+            setTicketSales(data); // Update state with actual database employees
+        } catch (error) {
+            console.error("Error fetching employees:", error);
+        }
+    }
 
 
     return (
@@ -19,7 +26,7 @@ const TotalReport = () => {
 
             {/* Filters (Dropdowns & Search Bars) */}
             <div className="filters">
-                <select className="report-dropdown">
+                <select className="report-dropdown"  value={reportType} onChange={(e) => setReportType(e.target.value)}>
                     <option value="total-sales">Total Sales Report</option>
                     <option value="total-ticket-sales">Total Tickets Sales </option>
                 </select>
@@ -36,23 +43,24 @@ const TotalReport = () => {
             <table className="report-table">
                 <thead>
                     <tr>
-                        <th>Customer</th>
-                        <th>Item Bought</th>
+                        <th>Ticket ID</th>
+                        <th>Customer ID</th>
+                        <th>Ticket Type</th>
                         <th>Cost</th>
-                        <th>Quantity</th>
-                        <th>Total</th>
                         <th>Date</th>
+                        <th>Total</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Customer: {salesData.customer}</td>
-                        <td>Item: {salesData.purchasedItem}</td>
-                        <td>Cost : ${salesData.totalEarned.toFixed(2)}</td>
-                        <td>Total Quantity: {salesData.totalQuantity}</td>
-                        <td>Total Count: {salesData.totalTransactions}</td>
-                        <td>Date: {salesData.date}</td>
-                    </tr>
+                {ticketSales.map((ticket) => (
+                        <tr key={ticket.Ticket_ID}>
+                            <td>{ticket.Ticket_ID}</td>
+                            <td>{ticket.Customer_ID || "N/A"}</td>
+                            <td>{ticket.Ticket_Type}</td>
+                            <td>${Number(ticket.Price || 0).toFixed(2)}</td>
+                            <td>{new Date(ticket.Date_Purchased).toLocaleDateString()}</td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
         </main>
