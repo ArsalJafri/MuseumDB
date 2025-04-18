@@ -32,7 +32,7 @@ const ManageEmployees = () => {
             }
           })
           .catch((err) => {
-            console.error("🚫 Access error:", err);
+            console.error("Access error:", err);
             navigate("/");
           });
       }, []);

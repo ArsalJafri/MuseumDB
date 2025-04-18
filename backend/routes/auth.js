@@ -52,7 +52,7 @@ module.exports = (req, res) => {
  * handles user registration
  */
 function handleRegister(req, res) {
-    console.log("📩 Received /auth/register request");
+    console.log("Received /auth/register request");
 
     let body = "";
 
@@ -61,7 +61,7 @@ function handleRegister(req, res) {
     req.on("end", () => {
         try {
             const { email, password, role, firstName, lastName, phoneNumber } = JSON.parse(body);
-            console.log("🔍 Parsed request body:", { email, role, firstName, lastName, phoneNumber });
+            console.log("Parsed request body:", { email, role, firstName, lastName, phoneNumber });
 
             if (!email || !password || !role || !firstName || !lastName || !phoneNumber) {
                 return sendResponse(res, 400, { message: "All fields are required." });
@@ -74,14 +74,14 @@ function handleRegister(req, res) {
                 bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
                     if (hashErr) return sendResponse(res, 500, { message: "Error hashing password.", error: hashErr });
 
-                    console.log("🔐 Password hashed successfully");
+                    console.log("Password hashed successfully");
 
                     const userInsertQuery = "INSERT INTO users (email, password, role, created_at) VALUES (?, ?, ?, NOW())";
                     db.query(userInsertQuery, [email, hashedPassword, role], (insertErr, result) => {
                         if (insertErr) return sendResponse(res, 500, { message: "Error creating user.", error: insertErr });
 
                         const userId = result.insertId;
-                        console.log("✅ User inserted into users table with ID:", userId);
+                        console.log("User inserted into users table with ID:", userId);
 
                         if (role === "customer") {
                             const customerInsert = `
@@ -89,7 +89,7 @@ function handleRegister(req, res) {
                                 VALUES (?, ?, ?, ?, ?, ?, ?)
                             `;
                             const values = [userId, "Regular", firstName, lastName, email, phoneNumber, "2000-01-01"];
-                            console.log("📤 Inserting customer:", values);
+                            console.log("Inserting customer:", values);
 
                             db.query(customerInsert, values, (custErr) => {
                                 if (custErr) return sendResponse(res, 500, { message: "Error creating customer record.", error: custErr });
@@ -110,7 +110,7 @@ function handleRegister(req, res) {
                                 null, "Unassigned", new Date(),
                                 email, phoneNumber, null, 0.0, null, 1
                             ];
-                            console.log("📤 Inserting staff:", values);
+                            console.log("Inserting staff:", values);
 
                             db.query(staffInsert, values, (staffErr) => {
                                 if (staffErr) return sendResponse(res, 500, { message: "Error creating staff record.", error: staffErr });
@@ -225,10 +225,10 @@ function handleUpdateProfile(req, res) {
 
                 db.query(query, values, (err, result) => {
                     if (err) {
-                        console.error("❌ Error updating customer:", err);
+                        console.error("Error updating customer:", err);
                         return sendResponse(res, 500, { message: "Failed to update customer profile.", error: err });
                     }
-                    console.log("✅ Customer profile updated successfully");
+                    console.log("Customer profile updated successfully");
                     sendResponse(res, 200, { message: "Customer profile updated." });
                 });
             } else {
@@ -241,15 +241,15 @@ function handleUpdateProfile(req, res) {
 
                 db.query(query, values, (err, result) => {
                     if (err) {
-                        console.error("❌ Error updating staff:", err);
+                        console.error("Error updating staff:", err);
                         return sendResponse(res, 500, { message: "Failed to update staff profile.", error: err });
                     }
-                    console.log("✅ Staff profile updated successfully");
+                    console.log("Staff profile updated successfully");
                     sendResponse(res, 200, { message: "Staff profile updated." });
                 });
             }
         } catch (error) {
-            console.error("❌ Invalid JSON format in update-profile:", error);
+            console.error("Invalid JSON format in update-profile:", error);
             sendResponse(res, 400, { message: "Invalid JSON format.", error });
         }
     });
@@ -527,8 +527,8 @@ function handleProfile(req, res) {
     const userId = req.user.id;
     const role = req.user.role;
 
-    console.log("✅ /auth/profile hit");
-    console.log("🧠 Decoded user from JWT:", req.user);
+    console.log("/auth/profile hit");
+    console.log("Decoded user from JWT:", req.user);
 
     if (role === "customer") {
         db.query(
@@ -547,14 +547,14 @@ function handleProfile(req, res) {
             [userId],
             (err, results) => {
                 if (err) {
-                    console.error("❌ DB error fetching customer:", err);
+                    console.error("DB error fetching customer:", err);
                     return sendResponse(res, 500, { message: "Error retrieving profile", error: err });
                 }
                 if (results.length === 0) {
-                    console.warn("⚠️ No customer profile found.");
+                    console.warn("No customer profile found.");
                     return sendResponse(res, 404, { message: "Profile not found." });
                 }
-                console.log("✅ Customer profile retrieved:", results[0]);
+                console.log("Customer profile retrieved:", results[0]);
                 return sendResponse(res, 200, results[0]);
             }
         );
@@ -577,14 +577,14 @@ function handleProfile(req, res) {
             [userId],
             (err, results) => {
                 if (err) {
-                    console.error("❌ DB error fetching staff:", err);
+                    console.error("DB error fetching staff:", err);
                     return sendResponse(res, 500, { message: "Error retrieving profile", error: err });
                 }
                 if (results.length === 0) {
-                    console.warn("⚠️ No staff profile found.");
+                    console.warn("No staff profile found.");
                     return sendResponse(res, 404, { message: "Profile not found." });
                 }
-                console.log("✅ Staff profile retrieved:", results[0]);
+                console.log("Staff profile retrieved:", results[0]);
                 return sendResponse(res, 200, results[0]);
             }
         );

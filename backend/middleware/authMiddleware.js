@@ -9,17 +9,17 @@ module.exports = (allowedRoles = []) => {
     return (req, res, next) => {
         try {
             const token = extractToken(req);
-            console.log("🔑 JWT token:", token);
+            console.log("JWT token:", token);
 
             if (!token) {
-                console.log("🚫 No token found!");
+                console.log("No token found!");
                 return respondWithError(res, 401, "Access denied. No token provided.");
             }
 
             // must return here to ensure the callback is handled properly
             return jwt.verify(token, env.JWT_SECRET, (err, decoded) => {
                 if (err) {
-                    console.log("❌ JWT verification failed:", err.message);
+                    console.log("JWT verification failed:", err.message);
                     return respondWithError(res, 403, "Invalid or expired token.");
                 }
 
@@ -27,7 +27,7 @@ module.exports = (allowedRoles = []) => {
 
                 // role-based access check (supports multiple roles)
                 if (allowedRoles.length && !allowedRoles.includes(req.user.role)) {
-                    console.log("⛔ Role not allowed:", req.user.role);
+                    console.log("Role not allowed:", req.user.role);
                     return respondWithError(res, 403, "Access denied. Insufficient permissions.");
                 }
 
@@ -43,7 +43,7 @@ module.exports = (allowedRoles = []) => {
 
 // helper to extract JWT from cookies
 function extractToken(req) {
-    console.log("🍪 Raw cookies:", req.headers.cookie);
+    console.log("Raw cookies:", req.headers.cookie);
     if (!req.headers.cookie) return null;
     const cookies = cookie.parse(req.headers.cookie);
     return cookies.jwt || null;
