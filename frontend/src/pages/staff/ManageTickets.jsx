@@ -22,7 +22,10 @@ const ManageTickets = () => {
   const fetchTickets = async () => {
     try {
       // Fetch all tickets (both Available and Sold) for management
-      const response = await fetch("https://museumdb.onrender.com/tickets");
+      const response = await fetch("https://museumdb.onrender.com/tickets", {
+        method: "GET",
+        credentials: "include",
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch tickets");
       }
@@ -39,8 +42,11 @@ const ManageTickets = () => {
 
   const fetchExhibitions = async () => {
     try {
-      const response = await fetch("https://museumdb.onrender.com/manage-exhibition");
-      if (!response.ok) {
+      const response = await fetch("https://museumdb.onrender.com/manage-exhibition", {
+        method: "GET",
+        credentials: "include",
+      });
+            if (!response.ok) {
         throw new Error("Failed to fetch exhibitions");
       }
       const data = await response.json();
@@ -69,6 +75,7 @@ const ManageTickets = () => {
       };
       const response = await fetch("https://museumdb.onrender.com/tickets", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -94,6 +101,7 @@ const ManageTickets = () => {
     try {
       const response = await fetch("https://museumdb.onrender.com/tickets", {
         method: "PUT",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -119,6 +127,7 @@ const ManageTickets = () => {
     try {
       const response = await fetch("https://museumdb.onrender.com/tickets/deactivate", {
         method: "PUT",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -142,6 +151,7 @@ const ManageTickets = () => {
     try {
       const response = await fetch("https://museumdb.onrender.com/tickets/reactivate", {
         method: "PUT",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

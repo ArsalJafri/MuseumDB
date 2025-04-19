@@ -1,6 +1,6 @@
 const url = require("url");
 const db = require("../db");
-
+const authMiddleware = require("../middleware/authMiddleware");
 
 function sendSummary(query, results, res, errorMessage) {
     db.query(query, (summaryErr, summaryResult) => {
@@ -25,6 +25,10 @@ module.exports = (req, res) => {
 
     // GET /total-report
     if (parsedUrl.pathname === "/total-report" && method === "GET") {
+        return authMiddleware({
+            roles: ["admin"],
+            jobTitles: ["Administrator"]
+        })(req, res, () => {
         const saleType = parsedUrl.query.type || "all";
         const dateRange = parsedUrl.query.dateRange || "all-dates";
 
@@ -332,6 +336,7 @@ module.exports = (req, res) => {
         });
 
         return;
+    });
     }
 
     res.writeHead(404, { "Content-Type": "application/json" });

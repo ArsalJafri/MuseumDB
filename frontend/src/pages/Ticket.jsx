@@ -13,7 +13,7 @@ const Tickets = () => {
   const [message, setMessage] = useState(""); // Store purchase success/failure message
   const [loading, setLoading] = useState(true); // Loading state
 
-  // 🔹 Fetch ticket prices dynamically from backend
+  // Fetch ticket prices dynamically from backend
   useEffect(() => {
     fetch("https://museumdb.onrender.com/tickets/customers")
       .then((response) => response.json())
@@ -31,18 +31,17 @@ const Tickets = () => {
         setTicketCounts(initialCounts);
       })
       .catch((error) => {
-        console.error("Error fetching tickets:", error);
         setMessage("Error loading tickets.");
         setLoading(false);
       });
   }, []);
 
-  // 🔹 Handle ticket selection (increment)
+  // Handle ticket selection (increment)
   const handleIncrement = (type) => {
     setTicketCounts((prev) => ({ ...prev, [type]: prev[type] + 1 }));
   };
 
-  // 🔹 Handle ticket deselection (decrement)
+  // Handle ticket deselection (decrement)
   const handleDecrement = (type) => {
     setTicketCounts((prev) => ({
       ...prev,
@@ -50,14 +49,14 @@ const Tickets = () => {
     }));
   };
 
-  // 🔹 Calculate subtotal
+  // Calculate subtotal
   const subtotal = ticketTypes.reduce(
     (total, { Ticket_Type, Price }) =>
       total + (ticketCounts[Ticket_Type] || 0) * Price,
     0
   );
 
-  // 🔹 Handle ticket purchase submission
+  // Handle ticket purchase submission
   const handlePurchase = async () => {
     if (!selectedDate) {
       setMessage("Please select a date.");
@@ -86,7 +85,7 @@ const Tickets = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(purchaseData),
-        credentials: "include", // ✅ Sends the JWT cookie
+        credentials: "include",
       });
   
       const data = await response.json();
