@@ -1,49 +1,57 @@
 const jwt = require("jsonwebtoken");
 const cookie = require("cookie"); // Use 'cookie' module for better parsing
+const db = require("../db");
 const { env } = require("process");
 
-// Middleware to verify JWT and enforce role-based access
-module.exports = (allowedRoles = []) => {
-    if (typeof allowedRoles === "string") allowedRoles = [allowedRoles]; // edge case: convert to array if string is passed from route
-
+// Middleware to verify JWT and enforce both role-based and job-title–based access
+module.exports = ({ roles = [], jobTitles = [] } = {}) => {
     return (req, res, next) => {
-        try {
-            const token = extractToken(req);
-            console.log("🔑 JWT token:", token);
+        const token = extractToken(req);
+        if (!token) {
+            return respondWithError(res, 401, "Access denied. No token provided.");
+        }
 
-            if (!token) {
-                console.log("🚫 No token found!");
-                return respondWithError(res, 401, "Access denied. No token provided.");
+        return jwt.verify(token, env.JWT_SECRET, (err, decoded) => {
+            if (err) {
+                return respondWithError(res, 403, "Invalid or expired token.");
+            }
+            req.user = decoded; // decoded contains id, role, and jobTitle (when embedded)
+
+            // 1) Role check
+            if (roles.length && !roles.includes(req.user.role)) {
+                return respondWithError(res, 403, "Access denied. Insufficient role.");
             }
 
-            // must return here to ensure the callback is handled properly
-            return jwt.verify(token, env.JWT_SECRET, (err, decoded) => {
-                if (err) {
-                    console.log("❌ JWT verification failed:", err.message);
-                    return respondWithError(res, 403, "Invalid or expired token.");
+            // 2) Job title check (only for staff/admin)
+            if (jobTitles.length) {
+                const userJobTitle = req.user.jobTitle;
+                if (!userJobTitle) {
+                    // fallback: look up in DB if not embedded
+                    return db.query(
+                        "SELECT Job_title FROM staff WHERE Staff_ID = ?",
+                        [req.user.id],
+                        (dbErr, results) => {
+                            if (dbErr || !results.length) {
+                                return respondWithError(res, 500, "Unable to verify job title.");
+                            }
+                            if (!jobTitles.includes(results[0].Job_title)) {
+                                return respondWithError(res, 403, "Access denied. Insufficient job title.");
+                            }
+                            next();
+                        }
+                    );
                 }
-
-                req.user = decoded;
-
-                // role-based access check (supports multiple roles)
-                if (allowedRoles.length && !allowedRoles.includes(req.user.role)) {
-                    console.log("⛔ Role not allowed:", req.user.role);
-                    return respondWithError(res, 403, "Access denied. Insufficient permissions.");
+                if (!jobTitles.includes(userJobTitle)) {
+                    return respondWithError(res, 403, "Access denied. Insufficient job title.");
                 }
-
-                next(); // proceed to next middleware or route handler
-            });
-
-        } catch (error) {
-            console.error("JWT Middleware Error:", error);
-            return respondWithError(res, 500, "Internal server error.");
-        }
+            }
+            next();
+        });
     };
 };
 
 // helper to extract JWT from cookies
 function extractToken(req) {
-    console.log("🍪 Raw cookies:", req.headers.cookie);
     if (!req.headers.cookie) return null;
     const cookies = cookie.parse(req.headers.cookie);
     return cookies.jwt || null;
@@ -54,3 +62,4 @@ function respondWithError(res, statusCode, message) {
     res.writeHead(statusCode, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: message }));
 }
+ 

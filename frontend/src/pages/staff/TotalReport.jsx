@@ -37,7 +37,7 @@ const TotalReport = () => {
 
         console.log("Fetching from:", url);
 
-        const response = await fetch(url);
+        const response = await fetch(url, { credentials: "include" });
         const data = await response.json();
 
         if (data.sales) {

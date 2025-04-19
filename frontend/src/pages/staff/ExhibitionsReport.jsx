@@ -15,12 +15,13 @@ const ExhibitionReport = () => {
 
   const fetchExhibitions = async () => {
     try {
-      const response = await fetch("https://museumdb.onrender.com/exhibition-report");
+      const response = await fetch("https://museumdb.onrender.com/exhibition-report", {
+        credentials: "include",
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch exhibitions");
       }
       const data = await response.json();
-      console.log("Fetched Exhibitions Data:", data);
       if (Array.isArray(data)) {
         setExhibitions(data);
       } else {
@@ -34,7 +35,9 @@ const ExhibitionReport = () => {
 
   const fetchExhibitionPurchases = async () => {
     try {
-      const response = await fetch("https://museumdb.onrender.com/exhibition-purchases");
+      const response = await fetch("https://museumdb.onrender.com/exhibition-purchases", {
+        credentials: "include",
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch exhibition purchase data");
       }

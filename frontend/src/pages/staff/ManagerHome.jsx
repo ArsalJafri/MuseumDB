@@ -21,7 +21,6 @@ const ManagerHome = () => {
         }
       })
       .catch((err) => {
-        console.error("[ManagerHome] Role verification error:", err);
         navigate("/");
       });
   }, [navigate]);

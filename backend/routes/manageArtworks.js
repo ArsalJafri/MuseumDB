@@ -4,9 +4,6 @@ const db = require("../db");
 module.exports = (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const method = req.method;
-  console.log(
-    `[manageArtworks.js] ${new Date().toISOString()} - Incoming ${method} request for ${parsedUrl.pathname}`
-  );
 
   res.setHeader("Access-Control-Allow-Origin", "https://museum-db-kappa.vercel.app"); // https://museum-db-kappa.vercel.app
   res.setHeader("Access-Control-Allow-Credentials", "true"); // http://localhost:5173
@@ -14,14 +11,12 @@ module.exports = (req, res) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (method === "OPTIONS") {
-    console.log("[manageArtworks.js] OPTIONS preflight request - sending 204");
     res.writeHead(204);
     return res.end();
   }
 
   // GET /manage-artworks - Retrieve all artworks with exhibition name
   if (parsedUrl.pathname === "/manage-artworks" && method === "GET") {
-    console.log("[manageArtworks.js] Handling GET /manage-artworks");
     // JOIN the exhibitions table to retrieve the exhibition name.
     const sql = `SELECT a.*, e.Name AS Exhibition_Name 
                  FROM artworks a 
@@ -32,13 +27,11 @@ module.exports = (req, res) => {
         res.writeHead(500, { "Content-Type": "application/json" });
         return res.end(JSON.stringify({ message: "Error retrieving artworks", error: err }));
       }
-      console.log("[manageArtworks.js] Retrieved artworks from database:", results);
 
       const updatedResults = results.map((row) => {
         if (row.artwork_image && Buffer.isBuffer(row.artwork_image)) {
           try {
             row.artwork_image = `data:image/jpeg;base64,${row.artwork_image.toString("base64")}`;
-            console.log("[manageArtworks.js] Converted artwork_image for Artwork_ID", row.Artwork_ID);
           } catch (conversionErr) {
             console.error("[manageArtworks.js] Error converting artwork image for Artwork_ID", row.Artwork_ID, conversionErr);
             row.artwork_image = null;
@@ -46,7 +39,6 @@ module.exports = (req, res) => {
         }
         return row;
       });
-      console.log("[manageArtworks.js] Sending response with artworks", updatedResults);
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(updatedResults));
     });
@@ -55,17 +47,13 @@ module.exports = (req, res) => {
 
   // POST /manage-artworks - Add a new artwork
   if (parsedUrl.pathname === "/manage-artworks" && method === "POST") {
-    console.log("[manageArtworks.js] Handling POST /manage-artworks");
     let body = "";
     req.on("data", chunk => {
-      console.log("[manageArtworks.js] Received data chunk in POST");
       body += chunk;
     });
     req.on("end", () => {
-      console.log("[manageArtworks.js] Finished receiving POST data, body:", body);
       try {
         const artwork = JSON.parse(body);
-        console.log("[manageArtworks.js] Parsed artwork data:", artwork);
         const imageBuffer = artwork.artwork_image_data
           ? Buffer.from(artwork.artwork_image_data, "base64")
           : null;
@@ -84,7 +72,6 @@ module.exports = (req, res) => {
           artwork.description,
           imageBuffer
         ];
-        console.log("[manageArtworks.js] SQL Values:", values);
 
         if (values.some((v) => v === undefined)) {
           console.error("[manageArtworks.js] Missing artwork field(s):", values);
@@ -98,7 +85,6 @@ module.exports = (req, res) => {
             res.writeHead(500, { "Content-Type": "application/json" });
             return res.end(JSON.stringify({ message: "Error adding artwork", error: err }));
           }
-          console.log("[manageArtworks.js] Artwork added successfully, result:", result);
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ message: "Artwork added successfully", Artwork_ID: result.insertId }));
         });
@@ -113,14 +99,11 @@ module.exports = (req, res) => {
 
   // PUT /manage-artworks - Update an existing artwork
   if (parsedUrl.pathname === "/manage-artworks" && method === "PUT") {
-    console.log("[manageArtworks.js] Handling PUT /manage-artworks");
     let body = "";
     req.on("data", chunk => {
-      console.log("[manageArtworks.js] Received data chunk in PUT");
       body += chunk;
     });
     req.on("end", () => {
-      console.log("[manageArtworks.js] Finished receiving PUT data, body:", body);
       try {
         const artwork = JSON.parse(body);
         if (!artwork.Artwork_ID) {
@@ -128,7 +111,6 @@ module.exports = (req, res) => {
           res.writeHead(400, { "Content-Type": "application/json" });
           return res.end(JSON.stringify({ message: "Artwork_ID is required for update" }));
         }
-        console.log("[manageArtworks.js] Parsed artwork data for update:", artwork);
         const imageBuffer = artwork.artwork_image_data
           ? Buffer.from(artwork.artwork_image_data, "base64")
           : null;
@@ -148,7 +130,6 @@ module.exports = (req, res) => {
           imageBuffer,
           artwork.Artwork_ID
         ];
-        console.log("[manageArtworks.js] SQL Values for update:", values);
 
         db.query(sql, values, (err, result) => {
           if (err) {
@@ -156,7 +137,6 @@ module.exports = (req, res) => {
             res.writeHead(500, { "Content-Type": "application/json" });
             return res.end(JSON.stringify({ message: "Error updating artwork", error: err }));
           }
-          console.log("[manageArtworks.js] Artwork updated successfully, result:", result);
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ message: "Artwork updated successfully" }));
         });
@@ -171,10 +151,8 @@ module.exports = (req, res) => {
 
   // DELETE /manage-artworks - Delete an artwork
   if (parsedUrl.pathname === "/manage-artworks" && method === "DELETE") {
-    console.log("[manageArtworks.js] Handling DELETE /manage-artworks");
     let body = "";
     req.on("data", chunk => {
-      console.log("[manageArtworks.js] Received data chunk in DELETE");
       body += chunk;
     });
     req.on("end", () => {
@@ -186,7 +164,6 @@ module.exports = (req, res) => {
           res.writeHead(400, { "Content-Type": "application/json" });
           return res.end(JSON.stringify({ message: "Artwork_ID is required for deletion" }));
         }
-        console.log("[manageArtworks.js] Parsed artwork data for deletion:", artwork);
         const sql = "DELETE FROM artworks WHERE Artwork_ID = ?;";
         db.query(sql, [artwork.Artwork_ID], (err, result) => {
           if (err) {

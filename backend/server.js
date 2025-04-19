@@ -17,6 +17,7 @@ const exhibitionRoutes = require("./routes/exhibitions");
 const manageArtworksRoutes = require("./routes/manageArtworks");
 const artworksRoutes = require("./routes/artworks");
 const customerPurchasesRoute = require("./routes/customerpurchases");
+const exhibitionsPage = require("./routes/exhibitionsPage");
 
 
 const allowedOrigins = [
@@ -43,7 +44,7 @@ const server = http.createServer((req, res) => {
     }
 
     const parsedUrl = url.parse(req.url, true);      
-
+ 
     if (parsedUrl.pathname === "/") {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ message: "Welcome to the Museum Database API" }));
@@ -54,28 +55,41 @@ const server = http.createServer((req, res) => {
         return;
     }
     else if (parsedUrl.pathname.startsWith("/employees")) {
-        // authMiddleware(["staff", "admin"])(req, res, () => {
-            employeesRoutes(req, res, parsedUrl);
-        // });
+        authMiddleware({
+            roles: ["staff", "admin"],
+            jobTitles: ["Manager", "Administrator"]
+        })(req, res, () => {
+            employeesRoutes(req, res);
+        });
         return;
     }
     else if (parsedUrl.pathname.startsWith("/total-report")) {
-        // authMiddleware("admin")(req, res, () => {
             reportsRoutes(req, res);
-        // });
         return;
     }
-    // Exhibition Routes for managing exhibitions (GET, POST, PUT, and soft-delete via is_active)
     else if (parsedUrl.pathname.startsWith("/manage-exhibition")) {
-        // authMiddleware(["staff", "admin"])(req, res, () => {
+        authMiddleware({
+            roles: ["staff", "admin"],
+            jobTitles: ["Curator", "Administrator"]
+        })(req, res, () => {
             exhibitionRoutes(req, res);
-        // });
+        });
         return;
+    }
+    else if (parsedUrl.pathname.startsWith("/exhibition-report")) {
+        authMiddleware({
+            roles: ["staff", "admin"],
+            jobTitles: ["Curator", "Administrator"]
+        })(req, res, () => {
+            exhibitionReportRoutes(req, res);
+        });
+        return;
+    }
+    else if (req.url.startsWith("/exhibition")) {
+        return exhibitionsPage(req, res);
     }
     else if (parsedUrl.pathname.startsWith("/manage-artworks")) {
-        // authMiddleware(["staff", "admin"])(req, res, () => {
             manageArtworksRoutes(req, res);
-        // });
         return;
     }
     else if (parsedUrl.pathname.startsWith("/artworks")) {
@@ -86,17 +100,13 @@ const server = http.createServer((req, res) => {
         exhibitionRoutes(req, res);
         return;
     }
-    
-    else if (parsedUrl.pathname.startsWith("/exhibition-report")) {
-        // authMiddleware(["staff", "admin"])(req, res, () => {
-            exhibitionReportRoutes(req, res);
-        // });
-        return;
-    }
     else if (parsedUrl.pathname.startsWith("/manageGiftshop")) {
-        // authMiddleware(["staff", "admin"])(req, res, () => {
-            manageGiftshopRoutes(req, res);
-        // });
+        authMiddleware({
+            roles: ["staff", "admin"],
+            jobTitles: ["Manager", "Administrator"]
+        })(req, res, () => {
+            manageGiftshopRoutes(req,res);
+        });
         return;
     }
     else if (req.url.startsWith("/complaints")) {
@@ -125,29 +135,22 @@ const server = http.createServer((req, res) => {
         ticketsRoutes(req, res);
         return;
     }
-    // NEW: Membership Routes
     else if (parsedUrl.pathname.startsWith("/membership")) {
         membershipRoutes(req, res, parsedUrl);
         return;
     }
-    // adding notifications routes
     else if (parsedUrl.pathname.startsWith("/notifications")) {
         notificationRoutes(req, res, parsedUrl); 
         return;
-      }
-      else if (parsedUrl.pathname.startsWith("/customer/purchases")) {
+    } 
+    else if (parsedUrl.pathname.startsWith("/customer/purchases")) {
         customerPurchasesRoute(req, res, parsedUrl);
         return;
-      }
-      
-      
-    
+    }
     else {
         res.writeHead(404, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ message: "Route not found" }));
     }
-    
-
 });
 
 const PORT = process.env.PORT || 5000;

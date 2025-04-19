@@ -1,7 +1,12 @@
 const url = require("url");
 const db = require("../db");
+const authMiddleware = require("../middleware/authMiddleware");
 
 module.exports = (req, res) => {
+  authMiddleware({
+    roles: ["staff", "admin"],
+    jobTitles: ["Manager", "Administrator"]
+  })(req, res, () => {  
   const parsedUrl = url.parse(req.url, true);
   const method = req.method;
 
@@ -235,4 +240,5 @@ module.exports = (req, res) => {
     res.writeHead(404, { "Content-Type": "application/json" });
     return res.end(JSON.stringify({ message: "Route not found" }));
   }
+});
 };

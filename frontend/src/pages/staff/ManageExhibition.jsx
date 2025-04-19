@@ -24,28 +24,24 @@ const ManageExhibitions = () => {
     fetchExhibitions();
   }, []);
 
-  // Note: This endpoint now returns all exhibitions (active and inactive)
   const fetchExhibitions = async () => {
     try {
-      const response = await fetch(
-        "https://museumdb.onrender.com/manage-exhibition/manage"
-      );
+      const response = await fetch("https://museumdb.onrender.com/manage-exhibition/manage", {
+        method: "GET",
+        credentials: "include",
+      });
+      
+      console.log("[ManageExhibitions] Response status:", response.status);
+      console.log("[ManageExhibitions] Response headers:", Array.from(response.headers.entries()));
       if (!response.ok) {
         throw new Error("Failed to fetch exhibitions");
       }
       const data = await response.json();
-      if (Array.isArray(data)) {
-        setExhibitions(data);
-      } else {
-        console.error("Data is not an array:", data);
-        setExhibitions([]);
-      }
+      setExhibitions(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Error fetching exhibitions:", error);
     }
   };
 
-  // Generic input change handler
   const handleInputChange = (e, stateSetter) => {
     const { name, value, type, checked } = e.target;
     stateSetter((prev) => ({
@@ -54,7 +50,6 @@ const ManageExhibitions = () => {
     }));
   };
 
-  // Handles file drop for image upload.
   const handleDrop = (e, stateSetter) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
@@ -63,7 +58,6 @@ const ManageExhibitions = () => {
     }
   };
 
-  // Handles file change (manual selection) for image upload.
   const handleFileChange = (e, stateSetter) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith("image/")) {
@@ -71,7 +65,6 @@ const ManageExhibitions = () => {
     }
   };
 
-  // Converts a file to a Base64 data URL and stores only the Base64 data.
   const convertFileToBase64 = (file, stateSetter) => {
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -83,7 +76,6 @@ const ManageExhibitions = () => {
     reader.readAsDataURL(file);
   };
 
-  // Add Exhibition Submission (POST)
   const handleAddSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -92,6 +84,7 @@ const ManageExhibitions = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify(newExhibition),
         }
       );
@@ -121,7 +114,6 @@ const ManageExhibitions = () => {
     }
   };
 
-  // Edit Exhibition Submission (PUT)
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -130,6 +122,7 @@ const ManageExhibitions = () => {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify(editExhibition),
         }
       );
@@ -147,16 +140,15 @@ const ManageExhibitions = () => {
     }
   };
 
-  // Deactivate Exhibition: update is_active to false.
   const handleDeactivateExhibition = async (exhibitionId) => {
-    if (!window.confirm("Are you sure you want to deactivate this exhibition?"))
-      return;
+    if (!window.confirm("Are you sure you want to deactivate this exhibition?")) return;
     try {
       const response = await fetch(
         "https://museumdb.onrender.com/manage-exhibition/deactivate",
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ Exhibition_ID: exhibitionId }),
         }
       );
@@ -172,16 +164,15 @@ const ManageExhibitions = () => {
     }
   };
 
-  // Reactivate Exhibition: update is_active to true.
   const handleReactivateExhibition = async (exhibitionId) => {
-    if (!window.confirm("Are you sure you want to reactivate this exhibition?"))
-      return;
+    if (!window.confirm("Are you sure you want to reactivate this exhibition?")) return;
     try {
       const response = await fetch(
         "https://museumdb.onrender.com/manage-exhibition/reactivate",
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ Exhibition_ID: exhibitionId }),
         }
       );
@@ -197,7 +188,6 @@ const ManageExhibitions = () => {
     }
   };
 
-  // Open edit modal and prefill with selected exhibition data.
   const handleEdit = (exhibition) => {
     setEditExhibition({ ...exhibition });
     setIsEditModalOpen(true);

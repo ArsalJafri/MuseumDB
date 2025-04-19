@@ -1,6 +1,6 @@
 const url = require("url");
-const db = require("../db"); // Import database connection
-// const authMiddleware = require("../middleware/authMiddleware"); // Uncomment if needed
+const db = require("../db");
+const authMiddleware = require("../middleware/authMiddleware");
 
 module.exports = (req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -62,7 +62,6 @@ module.exports = (req, res) => {
         res.writeHead(500, { "Content-Type": "application/json" });
         return res.end(JSON.stringify({ error: "Error aggregating exhibition data", details: err.message }));
       }
-      console.log("Detailed Aggregated exhibition purchases:", results);
       res.writeHead(200, { "Content-Type": "application/json" });
       return res.end(JSON.stringify(results));
     });
@@ -72,40 +71,44 @@ module.exports = (req, res) => {
 
   // GET /manage-exhibition - Retrieve all active exhibitions
   if (parsedUrl.pathname === "/manage-exhibition" && method === "GET") {
-    // Optionally use authMiddleware(["staff", "admin"]) here
-    db.query(
-      "SELECT * FROM exhibitions WHERE is_active = TRUE",
-      (err, results) => {
-        if (err) {
-          res.writeHead(500, { "Content-Type": "application/json" });
-          return res.end(
-            JSON.stringify({
-              message: "Error retrieving exhibitions",
-              error: err,
-            })
-          );
-        }
-
-        // Convert any binary exhibition_image to a Base64 data URL
-        const updatedResults = results.map((row) => {
-          if (row.exhibition_image && Buffer.isBuffer(row.exhibition_image)) {
-            try {
-              row.exhibition_image = `data:image/jpeg;base64,${row.exhibition_image.toString(
-                "base64"
-              )}`;
-            } catch (conversionErr) {
-              console.error("Error converting image data", conversionErr);
-              row.exhibition_image = null;
-            }
+  
+    // Apply authMiddleware inline before logic
+    authMiddleware({ roles: ["admin", "staff"] })(req, res, () => {
+  
+      db.query(
+        "SELECT * FROM exhibitions WHERE is_active = TRUE",
+        (err, results) => {
+          if (err) {
+            console.error("[Route] DB query error while fetching exhibitions:", err);
+            res.writeHead(500, { "Content-Type": "application/json" });
+            return res.end(
+              JSON.stringify({
+                message: "Error retrieving exhibitions",
+                error: err,
+              })
+            );
           }
-          return row;
-        });
-
-        console.log("Exhibitions with converted image data:", updatedResults);
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(updatedResults));
-      }
-    );
+    
+          // Convert any binary exhibition_image to a Base64 data URL
+          const updatedResults = results.map((row) => {
+            if (row.exhibition_image && Buffer.isBuffer(row.exhibition_image)) {
+              try {
+                row.exhibition_image = `data:image/jpeg;base64,${row.exhibition_image.toString(
+                  "base64"
+                )}`;
+              } catch (conversionErr) {
+                console.error("[Route] Error converting image data", conversionErr);
+                row.exhibition_image = null;
+              }
+            }
+            return row;
+          });
+    
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify(updatedResults));
+        }
+      );
+    });
     return;
   }
 
@@ -140,7 +143,6 @@ module.exports = (req, res) => {
           return row;
         });
 
-        console.log("Exhibitions with converted image data:", updatedResults);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(updatedResults));
       }
@@ -396,7 +398,7 @@ module.exports = (req, res) => {
     return;
   }
 
-  // 🔹 PUT /manage-exhibition/reactivate - Reactivate an exhibition by updating is_active to true
+  // PUT /manage-exhibition/reactivate - Reactivate an exhibition by updating is_active to true
 if (method === "PUT" && parsedUrl.pathname === "/manage-exhibition/reactivate") {
   let body = "";
   req.on("data", (chunk) => {
@@ -430,7 +432,7 @@ if (method === "PUT" && parsedUrl.pathname === "/manage-exhibition/reactivate") 
 }
 
 
-  // 🔹 PUT /manage-exhibition/deactivate - Deactivate an exhibition by updating is_active to false
+  // PUT /manage-exhibition/deactivate - Deactivate an exhibition by updating is_active to false
 if (method === "PUT" && parsedUrl.pathname === "/manage-exhibition/deactivate") {
   let body = "";
   req.on("data", (chunk) => {

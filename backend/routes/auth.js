@@ -2,10 +2,10 @@ const url = require("url");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../db");
-const nodemailer = require("nodemailer"); // send emails from Node.js
-const crypto = require("crypto"); // generates reset token (random strings)
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 const authMiddleware = require("../middleware/authMiddleware");
-require("dotenv").config(); // load environment variables
+require("dotenv").config();
 
 /**
  * handles incoming auth-related requests (register & login)
@@ -25,9 +25,7 @@ module.exports = (req, res) => {
         handleLogout(req, res);
     }
     else if (pathname === "/auth/change-password" && method === "POST") {
-        authMiddleware([])(req, res, () => { // need to be protected because user needs to be logged in to change password
-            handleChangePassword(req,res); 
-        });
+        authMiddleware([])(req, res, () => { handleChangePassword(req,res); });
     }
     else if (pathname === "/auth/forgot-password" && method === "POST"){
         handleForgotPassword(req,res);
@@ -36,62 +34,42 @@ module.exports = (req, res) => {
         handleResetPassword(req,res);
     }
     else if (pathname === "/auth/profile" && method === "GET") {
-        authMiddleware([])(req, res, () => {
-            handleProfile(req,res);
-        });
+        authMiddleware([])(req, res, () => { handleProfile(req,res); });
     }
     else if (pathname === "/auth/update-profile" && method === "PUT") {
-        authMiddleware([])(req, res, () => {
-            handleUpdateProfile(req, res);
-        });
+        authMiddleware([])(req, res, () => { handleUpdateProfile(req, res); });
     }
-    
 };
 
 /**
  * handles user registration
  */
 function handleRegister(req, res) {
-    console.log("📩 Received /auth/register request");
-
     let body = "";
-
-    req.on("data", (chunk) => (body += chunk));
-
+    req.on("data", chunk => (body += chunk));
     req.on("end", () => {
         try {
             const { email, password, role, firstName, lastName, phoneNumber } = JSON.parse(body);
-            console.log("🔍 Parsed request body:", { email, role, firstName, lastName, phoneNumber });
-
             if (!email || !password || !role || !firstName || !lastName || !phoneNumber) {
                 return sendResponse(res, 400, { message: "All fields are required." });
             }
-
             db.query("SELECT user_ID FROM users WHERE email = ?", [email], (err, results) => {
                 if (err) return sendResponse(res, 500, { message: "Database error.", error: err });
                 if (results.length > 0) return sendResponse(res, 409, { message: "Email already in use." });
 
                 bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
                     if (hashErr) return sendResponse(res, 500, { message: "Error hashing password.", error: hashErr });
-
-                    console.log("🔐 Password hashed successfully");
-
                     const userInsertQuery = "INSERT INTO users (email, password, role, created_at) VALUES (?, ?, ?, NOW())";
                     db.query(userInsertQuery, [email, hashedPassword, role], (insertErr, result) => {
                         if (insertErr) return sendResponse(res, 500, { message: "Error creating user.", error: insertErr });
-
                         const userId = result.insertId;
-                        console.log("✅ User inserted into users table with ID:", userId);
-
                         if (role === "customer") {
                             const customerInsert = `
                                 INSERT INTO customers (customer_ID, Customer_Type, First_Name, Last_Name, Email, Phone_Number, Birthdate)
                                 VALUES (?, ?, ?, ?, ?, ?, ?)
                             `;
                             const values = [userId, "Regular", firstName, lastName, email, phoneNumber, "2000-01-01"];
-                            console.log("📤 Inserting customer:", values);
-
-                            db.query(customerInsert, values, (custErr) => {
+                            db.query(customerInsert, values, custErr => {
                                 if (custErr) return sendResponse(res, 500, { message: "Error creating customer record.", error: custErr });
                                 return sendResponse(res, 201, { message: "Customer registered successfully!", user_ID: userId });
                             });
@@ -110,9 +88,7 @@ function handleRegister(req, res) {
                                 null, "Unassigned", new Date(),
                                 email, phoneNumber, null, 0.0, null, 1
                             ];
-                            console.log("📤 Inserting staff:", values);
-
-                            db.query(staffInsert, values, (staffErr) => {
+                            db.query(staffInsert, values, staffErr => {
                                 if (staffErr) return sendResponse(res, 500, { message: "Error creating staff record.", error: staffErr });
                                 return sendResponse(res, 201, { message: "Staff registered successfully!", user_ID: userId });
                             });
@@ -126,59 +102,60 @@ function handleRegister(req, res) {
     });
 }
 
-
-
-
 /**
  * handles user login
  */
 function handleLogin(req, res) {
     let body = "";
-
-    req.on("data", (chunk) => (body += chunk));
-
+    req.on("data", chunk => (body += chunk));
     req.on("end", () => {
         try {
             const { email, password } = JSON.parse(body);
-
             if (!email || !password) {
                 return sendResponse(res, 400, { message: "Email and password are required." });
             }
-
-            // check if the user exists
             db.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
                 if (err) return sendResponse(res, 500, { message: "Database error.", error: err });
-
-                if (results.length === 0) {
-                    return sendResponse(res, 401, { message: "Invalid email or password." });
-                }
-
+                if (results.length === 0) return sendResponse(res, 401, { message: "Invalid email or password." });
                 const user = results[0];
-
-                console.log("DEBUG: Input Password:", password);
-                console.log("DEBUG: Stored Hashed Password:", user.password);
-
-                // compare hashed password
                 bcrypt.compare(password, user.password, (bcryptErr, isMatch) => {
                     if (bcryptErr || !isMatch) {
                         return sendResponse(res, 401, { message: "Invalid email or password." });
                     }
-                                         
-                    // generate JWT token
-                    const token = jwt.sign(
-                        { id: user.user_ID, role: user.role },
-                        process.env.JWT_SECRET,
-                        { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
-                    );
-
-                    const headers = {
-                        "Set-Cookie": `jwt=${token}; HttpOnly; SameSite=None; Secure; Path=/; Max-Age=3600`
-                    };
-
-                    sendResponse(res, 200, { 
-                        message: "Login successful", 
-                        user: { id: user.user_ID, email: user.email, role: user.role } 
-                    }, headers);
+                    // customer: sign id & role only
+                    if (user.role === "customer") {
+                        const token = jwt.sign(
+                            { id: user.user_ID, role: user.role },
+                            process.env.JWT_SECRET,
+                            { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
+                        );
+                        const headers = {
+                            "Set-Cookie": `jwt=${token}; HttpOnly; SameSite=None; Secure; Path=/; Max-Age=3600`
+                        };
+                        return sendResponse(res, 200, {
+                            message: "Login successful",
+                            user: { id: user.user_ID, email: user.email, role: user.role }
+                        }, headers);
+                    }
+                    // staff/admin: fetch jobTitle then sign
+                    db.query("SELECT Job_title FROM staff WHERE Staff_ID = ?", [user.user_ID], (jobErr, jobRows) => {
+                        if (jobErr) {
+                            return sendResponse(res, 500, { message: "Error fetching job title.", error: jobErr });
+                        }
+                        const jobTitle = jobRows[0]?.Job_title;
+                        const token = jwt.sign(
+                            { id: user.user_ID, role: user.role, jobTitle },
+                            process.env.JWT_SECRET,
+                            { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
+                        );
+                        const headers = {
+                            "Set-Cookie": `jwt=${token}; HttpOnly; SameSite=None; Secure; Path=/; Max-Age=3600`
+                        };
+                        return sendResponse(res, 200, {
+                            message: "Login successful",
+                            user: { id: user.user_ID, email: user.email, role: user.role, jobTitle }
+                        }, headers);
+                    });
                 });
             });
         } catch (error) {
@@ -225,10 +202,9 @@ function handleUpdateProfile(req, res) {
 
                 db.query(query, values, (err, result) => {
                     if (err) {
-                        console.error("❌ Error updating customer:", err);
+                        console.error("Error updating customer:", err);
                         return sendResponse(res, 500, { message: "Failed to update customer profile.", error: err });
                     }
-                    console.log("✅ Customer profile updated successfully");
                     sendResponse(res, 200, { message: "Customer profile updated." });
                 });
             } else {
@@ -241,15 +217,14 @@ function handleUpdateProfile(req, res) {
 
                 db.query(query, values, (err, result) => {
                     if (err) {
-                        console.error("❌ Error updating staff:", err);
+                        console.error("Error updating staff:", err);
                         return sendResponse(res, 500, { message: "Failed to update staff profile.", error: err });
                     }
-                    console.log("✅ Staff profile updated successfully");
                     sendResponse(res, 200, { message: "Staff profile updated." });
                 });
             }
         } catch (error) {
-            console.error("❌ Invalid JSON format in update-profile:", error);
+            console.error("Invalid JSON format in update-profile:", error);
             sendResponse(res, 400, { message: "Invalid JSON format.", error });
         }
     });
@@ -321,7 +296,6 @@ function handleForgotPassword(req, res) {
                 return res.end(JSON.stringify({ message: "Email is required." }));
             }
 
-            console.log(`Password reset requested for: ${email}`); // DEBUGGING
 
             // check if user exists
             db.query("SELECT user_ID FROM users WHERE email = ?", [email], (err, results) => {
@@ -343,8 +317,6 @@ function handleForgotPassword(req, res) {
                 const hashedToken = bcrypt.hashSync(resetToken, 10); // store hashed version in DB
                 const expiryTime = new Date(Date.now() + 60 * 60 * 1000); // token valid for 1 hour
 
-                console.log(`Generated reset token for user ${userId}`); // DEBUGGING
-
                 // remove old reset tokens before inserting a new one
                 db.query("UPDATE users SET reset_token = NULL, reset_token_expiry = NULL WHERE user_ID = ?", [userId], (clearErr) => {
                     if (clearErr) {
@@ -363,8 +335,6 @@ function handleForgotPassword(req, res) {
                                 res.writeHead(500, { "Content-Type": "application/json" });
                                 return res.end(JSON.stringify({ message: "Error storing reset token." }));
                             }
-
-                            console.log(`Reset token saved for user ${userId}, expires at ${expiryTime}`); // DEBUGGING
 
                             // send password reset email
                             sendPasswordResetEmail(email, resetToken);
@@ -401,8 +371,6 @@ function handleResetPassword(req, res) {
                 return res.end(JSON.stringify({ message: "Reset token and new password are required." }));
             }
 
-            console.log(`Password reset attempt with token: ${resetToken.substring(0, 10)}...`); // DEBUGGING
-
             // Find the user by reset token and check expiration
             db.query("SELECT user_ID, reset_token, reset_token_expiry FROM users WHERE reset_token IS NOT NULL", [], (err, results) => {
                 if (err) {
@@ -435,8 +403,6 @@ function handleResetPassword(req, res) {
                     return res.end(JSON.stringify({ message: "Reset token has expired. Request a new one." }));
                 }
 
-                console.log(`Valid reset token for user ID: ${user_ID}`);  // DEBUGGING
-
                 // Hash the new password
                 bcrypt.hash(newPassword, 10, (hashErr, hashedPassword) => {
                     if (hashErr) {
@@ -454,8 +420,6 @@ function handleResetPassword(req, res) {
                                 res.writeHead(500, { "Content-Type": "application/json" });
                                 return res.end(JSON.stringify({ message: "Error updating password." }));
                             }
-
-                            console.log(`Password reset successfully for user ID: ${user_ID}`); // DEBUGGING
                             res.writeHead(200, { "Content-Type": "application/json" });
                             res.end(JSON.stringify({ message: "Password reset successfully!" }));
                         }
@@ -527,9 +491,6 @@ function handleProfile(req, res) {
     const userId = req.user.id;
     const role = req.user.role;
 
-    console.log("✅ /auth/profile hit");
-    console.log("🧠 Decoded user from JWT:", req.user);
-
     if (role === "customer") {
         db.query(
             `SELECT 
@@ -547,14 +508,13 @@ function handleProfile(req, res) {
             [userId],
             (err, results) => {
                 if (err) {
-                    console.error("❌ DB error fetching customer:", err);
+                    console.error("DB error fetching customer:", err);
                     return sendResponse(res, 500, { message: "Error retrieving profile", error: err });
                 }
                 if (results.length === 0) {
-                    console.warn("⚠️ No customer profile found.");
+                    console.warn("No customer profile found.");
                     return sendResponse(res, 404, { message: "Profile not found." });
                 }
-                console.log("✅ Customer profile retrieved:", results[0]);
                 return sendResponse(res, 200, results[0]);
             }
         );
@@ -577,14 +537,13 @@ function handleProfile(req, res) {
             [userId],
             (err, results) => {
                 if (err) {
-                    console.error("❌ DB error fetching staff:", err);
+                    console.error("DB error fetching staff:", err);
                     return sendResponse(res, 500, { message: "Error retrieving profile", error: err });
                 }
                 if (results.length === 0) {
-                    console.warn("⚠️ No staff profile found.");
+                    console.warn("No staff profile found.");
                     return sendResponse(res, 404, { message: "Profile not found." });
                 }
-                console.log("✅ Staff profile retrieved:", results[0]);
                 return sendResponse(res, 200, results[0]);
             }
         );

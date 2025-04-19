@@ -1,13 +1,13 @@
 const url = require("url");
-const db = require("../db"); // Import database connection
-// const authMiddleware = require("../middleware/authMiddleware"); // Uncomment if you want to protect the endpoint
+const db = require("../db");
+const authMiddleware = require("../middleware/authMiddleware");
 
 module.exports = (req, res) => { 
     const parsedUrl = url.parse(req.url, true);
     const method = req.method;
 
     // Handle CORS (Allow frontend to communicate with backend)
-    res.setHeader("Access-Control-Allow-Origin", "*"); // Adjust to your frontend URL if needed
+    res.setHeader("Access-Control-Allow-Origin", "https://museum-db-kappa.vercel.app"); // Adjust to your frontend URL if needed
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -18,8 +18,10 @@ module.exports = (req, res) => {
     
     // GET /exhibition-report - Retrieve all exhibitions as a report (only active ones)
 if (parsedUrl.pathname === "/exhibition-report" && method === "GET") {
-    // Uncomment the next line to require authentication (staff or admin)
-    // return authMiddleware(["staff", "admin"])(req, res, () => {
+    return authMiddleware({
+        roles: ["staff", "admin"],
+        jobTitles: ["Curator", "Administrator"],
+      })(req, res, () => {
         const sql = `
           SELECT e.*, 
                  COUNT(c.Complaint_ID) AS complaintCount, 
@@ -38,8 +40,7 @@ if (parsedUrl.pathname === "/exhibition-report" && method === "GET") {
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(JSON.stringify(results));
         });
-    // });
-    return;
+    });
 }
 
 
