@@ -282,18 +282,19 @@ Admin/Manager dashboard for complaint handling:
 - Shows top-earning exhibitions and ticket volumes
 
 - Admin can view filtered and total sales reports for the following:
-- Tickets
-- Gift Shop
-- Memberships
+  - Tickets
+  - Gift Shop
+  - Memberships
 
-- Also includes summaries like the following :
-- Top-selling product
-- Top revenue source
-- Most active customer
-- Most popular membership type
-![Reviews/Complaints Report Dashboard](./documentationFiles/totalSalesReport.png)
+- Also includes summaries like the following:
+  - Top-selling product
+  - Top revenue source
+  - Most active customer
+  - Most popular membership type
 
-![Sales Report](./documentationFiles/totalSalesReport.png)
+![Total Sales Report Dashboard](./documentationFiles/totalSalesReport.png)
+
+
 
 
 
